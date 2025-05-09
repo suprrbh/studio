@@ -1,24 +1,24 @@
+// src/app/page.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { JiraConfigForm, type JiraConfig } from '@/components/JiraConfigForm';
 import { SeleniumInputForm } from '@/components/SeleniumInputForm';
 import { ReportPreview } from '@/components/ReportPreview';
-import { getLocalStorageItem, setLocalStorageItem } from '@/lib/localStorage';
+import { getLocalStorageItem } from '@/lib/localStorage'; // No need to setLocalStorageItem here
 import { Separator } from '@/components/ui/separator';
 
 const JIRA_CONFIG_KEY = 'jiraPilotConfig';
 
 export default function HomePage() {
-  const [jiraConfig, setJiraConfig] = useState<JiraConfig>({ url: '', apiToken: '', projectKey: '' });
+  const [jiraConfig, setJiraConfig] = useState<JiraConfig>({ url: '', email: '', apiToken: '', projectKey: '' });
   const [generatedReport, setGeneratedReport] = useState<string>('');
   
-  // Unified loading state or specific ones:
   const [isLoadingReport, setIsLoadingReport] = useState(false);
   const [isSubmittingToJira, setIsSubmittingToJira] = useState(false);
 
   useEffect(() => {
-    const savedConfig = getLocalStorageItem<JiraConfig>(JIRA_CONFIG_KEY, { url: '', apiToken: '', projectKey: '' });
+    const savedConfig = getLocalStorageItem<JiraConfig>(JIRA_CONFIG_KEY, { url: '', email: '', apiToken: '', projectKey: '' });
     setJiraConfig(savedConfig);
   }, []);
 
@@ -34,6 +34,7 @@ export default function HomePage() {
   const handleReportSubmitted = () => {
     // Optionally clear the report or perform other actions after submission
     // setGeneratedReport(''); 
+    // Potentially reset loading state if needed, though ReportPreview handles its own
   };
 
   return (

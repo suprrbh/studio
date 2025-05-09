@@ -1,3 +1,4 @@
+// src/components/ReportPreview.tsx
 "use client";
 
 import React, { useState, useEffect, type FormEvent } from 'react';
@@ -9,7 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { summarizeReportForJira } from '@/ai/flows/summarize-report-for-jira';
 import type { SummarizeReportForJiraInput } from '@/ai/flows/summarize-report-for-jira';
 import type { JiraConfig } from './JiraConfigForm';
-import { Send, Loader2, BookOpenText } from 'lucide-react';
+import { createJiraIssue } from '@/app/actions/jiraActions'; // Import the server action
+import { Send, Loader2, BookOpenText, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+
 
 interface ReportPreviewProps {
   report: string;
@@ -38,10 +42,10 @@ export function ReportPreview({ report, jiraConfig, isLoading, setIsLoading, onR
       return;
     }
 
-    if (!jiraConfig.url || !jiraConfig.apiToken || !jiraConfig.projectKey) {
+    if (!jiraConfig.url || !jiraConfig.email || !jiraConfig.apiToken || !jiraConfig.projectKey) {
       toast({
         title: "Jira Configuration Missing",
-        description: "Please configure your Jira settings before submitting.",
+        description: "Please complete your Jira settings (URL, Email, API Token, Project Key) before submitting.",
         variant: "destructive",
       });
       return;
@@ -49,27 +53,47 @@ export function ReportPreview({ report, jiraConfig, isLoading, setIsLoading, onR
     
     setIsLoading(true);
     try {
-      const input: SummarizeReportForJiraInput = { report: editableReport };
-      const result = await summarizeReportForJira(input);
+      const summarizeInput: SummarizeReportForJiraInput = { report: editableReport };
+      const summaryResult = await summarizeReportForJira(summarizeInput);
       
-      // Simulate Jira submission
-      console.log("Jira Submission Details:", {
+      const jiraIssueResult = await createJiraIssue({
         config: jiraConfig,
-        summary: result.jiraDescription,
+        summary: summaryResult.jiraDescription,
+        description: editableReport, // Pass the full editable report as the description
       });
 
-      toast({
-        title: "Report Submitted to Jira (Simulated)",
-        description: `Issue for project ${jiraConfig.projectKey} would be created with the summary.`,
-        duration: 5000,
-      });
-      if (onReportSubmitted) onReportSubmitted();
+      if (jiraIssueResult.success && jiraIssueResult.data) {
+        toast({
+          title: "Report Submitted to Jira!",
+          description: (
+            <div className="flex flex-col gap-1">
+              <p>Issue <span className="font-semibold">{jiraIssueResult.data.key}</span> created successfully.</p>
+              <a 
+                href={`${jiraConfig.url.replace(/\/$/, '')}/browse/${jiraIssueResult.data.key}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                View Issue <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          ),
+          duration: 7000,
+        });
+        if (onReportSubmitted) onReportSubmitted();
+      } else {
+        toast({
+          title: "Jira Submission Failed",
+          description: jiraIssueResult.error || "An unknown error occurred while creating the Jira issue.",
+          variant: "destructive",
+        });
+      }
 
     } catch (error) {
       console.error("Error submitting to Jira:", error);
       toast({
         title: "Error Submitting to Jira",
-        description: "An error occurred while preparing the report for Jira. Please try again.",
+        description: `An unexpected error occurred: ${error instanceof Error ? error.message : String(error)}`,
         variant: "destructive",
       });
     } finally {

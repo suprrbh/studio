@@ -1,3 +1,4 @@
+// src/components/JiraConfigForm.tsx
 "use client";
 
 import React, { useState, useEffect, type FormEvent } from 'react';
@@ -7,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getLocalStorageItem, setLocalStorageItem } from '@/lib/localStorage';
-import { Settings2, Save } from 'lucide-react';
+import { Settings2, Save, Mail } from 'lucide-react';
 
 const JIRA_CONFIG_KEY = 'jiraPilotConfig';
 
 export interface JiraConfig {
   url: string;
+  email: string; // Added email field
   apiToken: string;
   projectKey: string;
 }
@@ -24,19 +26,21 @@ interface JiraConfigFormProps {
 
 export function JiraConfigForm({ onConfigChange, initialConfig }: JiraConfigFormProps) {
   const [jiraUrl, setJiraUrl] = useState(initialConfig.url);
+  const [jiraEmail, setJiraEmail] = useState(initialConfig.email); // Added email state
   const [apiToken, setApiToken] = useState(initialConfig.apiToken);
   const [projectKey, setProjectKey] = useState(initialConfig.projectKey);
   const { toast } = useToast();
 
   useEffect(() => {
     setJiraUrl(initialConfig.url);
+    setJiraEmail(initialConfig.email); // Sync email from initialConfig
     setApiToken(initialConfig.apiToken);
     setProjectKey(initialConfig.projectKey);
   }, [initialConfig]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const newConfig = { url: jiraUrl, apiToken, projectKey };
+    const newConfig = { url: jiraUrl, email: jiraEmail, apiToken, projectKey };
     setLocalStorageItem(JIRA_CONFIG_KEY, newConfig);
     onConfigChange(newConfig);
     toast({
@@ -67,6 +71,21 @@ export function JiraConfigForm({ onConfigChange, initialConfig }: JiraConfigForm
               required
               className="bg-background"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="jiraEmail">Jira Email</Label> {/* Added Email Field */}
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="jiraEmail"
+                type="email"
+                placeholder="your-email@example.com"
+                value={jiraEmail}
+                onChange={(e) => setJiraEmail(e.target.value)}
+                required
+                className="bg-background pl-10"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="apiToken">API Token</Label>
