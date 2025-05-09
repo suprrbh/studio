@@ -14,7 +14,7 @@ const JIRA_CONFIG_KEY = 'jiraPilotConfig';
 
 export interface JiraConfig {
   url: string;
-  email: string; // Added email field
+  email: string; 
   apiToken: string;
   projectKey: string;
 }
@@ -25,17 +25,18 @@ interface JiraConfigFormProps {
 }
 
 export function JiraConfigForm({ onConfigChange, initialConfig }: JiraConfigFormProps) {
-  const [jiraUrl, setJiraUrl] = useState(initialConfig.url);
-  const [jiraEmail, setJiraEmail] = useState(initialConfig.email); // Added email state
-  const [apiToken, setApiToken] = useState(initialConfig.apiToken);
-  const [projectKey, setProjectKey] = useState(initialConfig.projectKey);
+  const [jiraUrl, setJiraUrl] = useState(initialConfig.url || '');
+  const [jiraEmail, setJiraEmail] = useState(initialConfig.email || ''); 
+  const [apiToken, setApiToken] = useState(initialConfig.apiToken || '');
+  const [projectKey, setProjectKey] = useState(initialConfig.projectKey || '');
   const { toast } = useToast();
 
   useEffect(() => {
-    setJiraUrl(initialConfig.url);
-    setJiraEmail(initialConfig.email); // Sync email from initialConfig
-    setApiToken(initialConfig.apiToken);
-    setProjectKey(initialConfig.projectKey);
+    // Ensure values are always strings for controlled inputs
+    setJiraUrl(initialConfig.url || '');
+    setJiraEmail(initialConfig.email || ''); 
+    setApiToken(initialConfig.apiToken || '');
+    setProjectKey(initialConfig.projectKey || '');
   }, [initialConfig]);
 
   const handleSubmit = (e: FormEvent) => {
@@ -73,7 +74,7 @@ export function JiraConfigForm({ onConfigChange, initialConfig }: JiraConfigForm
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="jiraEmail">Jira Email</Label> {/* Added Email Field */}
+            <Label htmlFor="jiraEmail">Jira Email</Label> 
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
