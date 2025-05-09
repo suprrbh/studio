@@ -23,6 +23,8 @@ interface ReportPreviewProps {
   onReportSubmitted?: () => void;
 }
 
+const JIRA_DESCRIPTION_MAX_LENGTH = 254; // Less than 255 characters
+
 export function ReportPreview({ report, jiraConfig, isLoading, setIsLoading, onReportSubmitted }: ReportPreviewProps) {
   const [editableReport, setEditableReport] = useState(report);
   const { toast } = useToast();
@@ -56,10 +58,20 @@ export function ReportPreview({ report, jiraConfig, isLoading, setIsLoading, onR
       const summarizeInput: SummarizeReportForJiraInput = { report: editableReport };
       const summaryResult = await summarizeReportForJira(summarizeInput);
       
+      let reportForJiraDescription = editableReport;
+      if (editableReport.length > JIRA_DESCRIPTION_MAX_LENGTH) {
+        reportForJiraDescription = editableReport.substring(0, JIRA_DESCRIPTION_MAX_LENGTH);
+        toast({
+          title: "Report Content Truncated",
+          description: `The report content was truncated to ${JIRA_DESCRIPTION_MAX_LENGTH} characters for the Jira issue description. The AI-generated summary is used for the issue title.`,
+          duration: 7000,
+        });
+      }
+
       const jiraIssueResult = await createJiraIssue({
         config: jiraConfig,
-        summary: summaryResult.jiraDescription,
-        description: editableReport, // Pass the full editable report as the description
+        summary: summaryResult.jiraDescription, // This is the AI-generated summary for the Jira issue title
+        description: reportForJiraDescription, // This is the (potentially truncated) full report for the Jira issue description
       });
 
       if (jiraIssueResult.success && jiraIssueResult.data) {
@@ -108,12 +120,12 @@ export function ReportPreview({ report, jiraConfig, isLoading, setIsLoading, onR
           <BookOpenText className="h-6 w-6 text-primary" />
           <CardTitle>Generated Report</CardTitle>
         </div>
-        <CardDescription>Review and edit the AI-generated report before submitting to Jira.</CardDescription>
+        <CardDescription>Review and edit the AI-generated report. The full content below will be used as the Jira issue description (truncated if over {JIRA_DESCRIPTION_MAX_LENGTH} characters). An AI-generated summary will be used for the Jira issue title.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmitToJira} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="reportPreview">Report Content</Label>
+            <Label htmlFor="reportPreview">Report Content (for Jira Description)</Label>
             <Textarea
               id="reportPreview"
               value={editableReport}
